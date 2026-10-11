@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ParkVoice - 100% Offline Voice & Text OSM Parking PWA</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#090d16">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
+
+  <!-- Local Offline Leaflet CSS -->
+  <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-box">
+          <img src="/static/icons/icon.svg" alt="ParkVoice Logo" class="brand-icon">
+        </div>
+        <div class="brand-text">
+          <div class="brand-title-row">
+            <h1 class="brand-title">ParkVoice</h1>
+            <span class="badge-offline">100% Offline PWA</span>
+          </div>
+          <p class="brand-subtitle">Voice & Text-Guided OpenStreetMap Parking Navigator</p>
+        </div>
+      </div>
+
+      <!-- Current Location Landmark Pill -->
+      <div class="header-location-box" id="headerLocationPill" title="Click to change location preset or coordinates">
+        <span class="loc-pin-icon">📍</span>
+        <div class="loc-text-col">
+          <span class="loc-name" id="locLandmarkName">Chennai Central</span>
+          <span class="loc-coords" id="locCoordinatesText">13.0827° N, 80.2707° E</span>
+        </div>
+        <svg class="chevron-sm" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+
+      <!-- System Health Matrix -->
+      <div class="header-status">
+        <div class="status-pill" id="statusPillLlm" title="Qwen 3 1.7B on llama.cpp">
+          <span class="status-dot"></span>
+          <span class="status-label">LLM: Qwen3</span>
+        </div>
+        <div class="status-pill" id="statusPillMcp" title="OpenStreetMap Model Context Protocol Server">
+          <span class="status-dot"></span>
+          <span class="status-label">OSM MCP 2.x</span>
+        </div>
+        <div class="status-pill" id="statusPillStt" title="Faster-Whisper Offline STT">
+          <span class="status-dot"></span>
+          <span class="status-label">Whisper STT</span>
+        </div>
+        <div class="status-pill" id="statusPillTts" title="Piper Neural Voice Offline TTS">
+          <span class="status-dot"></span>
+          <span class="status-label">Piper TTS</span>
+        </div>
+        <div class="status-pill db-pill" id="statusPillDb" title="Offline SQLite Spatial Database">
+          <span class="db-icon">💾</span>
+          <span class="status-label" id="badgeTotalSpots">234 Spots</span>
+        </div>
+
+        <!-- Header Actions -->
+        <div class="header-actions">
+          <button id="btnClearChat" class="btn-icon" title="Clear Conversation History">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+          </button>
+          <button id="btnSettings" class="btn-icon" title="Settings, Engines & Offline Maps">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Mobile View Tab Bar (Visible on mobile/tablet) -->
+    <nav class="mobile-tabs" id="mobileTabs" aria-label="Mobile Navigation">
+      <button class="mobile-tab-btn active" id="tabBtnChat" data-target="panel-left">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>Assistant</span>
+      </button>
+      <button class="mobile-tab-btn" id="tabBtnMap" data-target="panel-right">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        <span>Map & Spots</span>
+        <span class="mobile-badge" id="mobileSpotsCount">0</span>
+      </button>
+    </nav>
+
+    <!-- Main Production Workspace -->
+    <main class="main-layout">
+      <!-- ============================================== -->
+      <!-- Left Panel: Conversational AI & Unified Input -->
+      <!-- ============================================== -->
+      <section class="panel-left" id="panelLeft">
+        <!-- Assistant Dialogue Feed Card -->
+        <div class="card dialogue-card">
+          <div class="dialogue-header">
+            <div class="dialogue-header-left">
+              <span class="assistant-sparkle">✦</span>
+              <span class="dialogue-title">AI Parking Navigator</span>
+              <span class="session-badge" id="sessionStatusBadge">Ready</span>
+            </div>
+            <div class="dialogue-header-right">
+              <div id="timingsBadge" class="timings-badge" title="Latency breakdown: STT | LLM | TTS">System Ready</div>
+            </div>
+          </div>
+
+          <!-- Message History Scroll Area -->
+          <div class="dialogue-scroll" id="dialogueContainer">
+            <!-- Welcome Onboarding Card -->
+            <div class="welcome-card" id="welcomeCard">
+              <div class="welcome-header">
+                <div class="welcome-icon-box">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                </div>
+                <div>
+                  <h3 class="welcome-title">Welcome to ParkVoice Offline</h3>
+                  <p class="welcome-desc">Find parking anywhere without internet. Type your query or use voice dictation below.</p>
+                </div>
+              </div>
+              <div class="welcome-features">
+                <div class="feature-tag"><span>🎙️</span> Faster-Whisper Offline STT</div>
+                <div class="feature-tag"><span>🧠</span> Qwen 3 Agentic Reasoning</div>
+                <div class="feature-tag"><span>🗺️</span> SQLite OSM Haversine Index</div>
+                <div class="feature-tag"><span>🔊</span> Piper Neural Audio Output</div>
+              </div>
+            </div>
+
+            <!-- Initial Assistant Bubble -->
+            <div class="message-bubble assistant-bubble" id="assistantBubble">
+              <div class="bubble-header">
+                <div class="bubble-sender-row">
+                  <span class="avatar-bot">PV</span>
+                  <span class="bubble-sender">ParkVoice Assistant</span>
+                  <span class="bubble-tag">Qwen 3 + MCP</span>
+                </div>
+                <span class="bubble-time" id="assistantBubbleTime">Just now</span>
+              </div>
+              <div class="bubble-content" id="assistantText">
+                Hello! I am your 100% offline parking assistant. You can speak into the microphone or type below to find parking spaces, check fees, or search covered garages near your location.
+              </div>
+
+              <!-- Audio Player Bar -->
+              <div class="audio-control-bar" id="audioControlBar">
+                <button id="btnPlayAudio" class="btn-audio-play" title="Play / Pause Spoken Answer">
+                  <svg id="playIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </button>
+                <div class="audio-progress-bar" id="audioProgressBarContainer" title="Click to seek">
+                  <div class="audio-progress-fill" id="audioProgressFill"></div>
+                </div>
+                <span class="audio-duration" id="audioDuration">0:00 / 0:00</span>
+                <button id="btnAudioSpeed" class="btn-audio-speed" title="Change Playback Speed">1.0x</button>
+                <button id="btnReplayAudio" class="btn-audio-icon" title="Replay">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                </button>
+              </div>
+
+              <!-- MCP Execution Inspector (Collapsible) -->
+              <div class="mcp-inspector">
+                <button class="mcp-inspector-toggle" id="btnToggleMcp">
+                  <span class="mcp-toggle-icon">⚡</span>
+                  <span class="mcp-toggle-label">OpenStreetMap MCP Trace</span>
+                  <span class="mcp-count-badge" id="mcpCountBadge">0 Calls</span>
+                  <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="mcp-inspector-content" id="mcpInspectorContent" style="display: none;">
+                  <div class="mcp-trace-actions">
+                    <span class="mcp-subheading">Model Context Protocol 2.x Tool Trace</span>
+                    <button id="btnCopyMcpTrace" class="btn-chip-sm">Copy JSON</button>
+                  </div>
+                  <pre id="mcpJsonTrace">// No MCP tools executed yet</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Suggested Quick Query Prompts Carousel -->
+          <div class="quick-prompts-wrapper">
+            <span class="prompts-label">Suggested:</span>
+            <div class="quick-prompts" id="quickPromptsList">
+              <button class="btn-chip" data-prompt="Find nearby parking places">🚗 Nearby Parking</button>
+              <button class="btn-chip" data-prompt="Find free parking spots near me">🆓 Free Parking</button>
+              <button class="btn-chip" data-prompt="Find parking near Redhills">📍 Red Hills Terminus</button>
+              <button class="btn-chip" data-prompt="Find parking near Gummidipoondi">🚉 Gummidipoondi Station</button>
+              <button class="btn-chip" data-prompt="Find underground or multi-level covered parking">🏢 Covered / MLCP</button>
+              <button class="btn-chip" data-prompt="Find parking near Chennai Central">🚉 Central Station</button>
+              <button class="btn-chip" data-prompt="Find parking near Marina Beach">🏖️ Marina Beach</button>
+              <button class="btn-chip" data-prompt="Find parking with large capacity">🅿️ High Capacity</button>
+            </div>
+          </div>
+
+          <!-- Real-Time Voice Recording Waveform Overlay (Expands during recording) -->
+          <div class="voice-recording-overlay" id="voiceRecordingOverlay" style="display: none;">
+            <div class="recording-bar-left">
+              <span class="recording-pulse-indicator"></span>
+              <div class="recording-meta">
+                <span class="recording-state-label" id="voiceStateText">Listening...</span>
+                <span class="recording-timer" id="recordingTimer">00:00</span>
+              </div>
+            </div>
+            <div class="visualizer-wrapper">
+              <canvas id="visualizerCanvas" width="280" height="42"></canvas>
+            </div>
+            <div class="recording-bar-right">
+              <button id="btnCancelRecording" class="btn-record-action btn-record-cancel" title="Cancel Voice Recording">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <span>Cancel</span>
+              </button>
+              <button id="btnFinishRecording" class="btn-record-action btn-record-finish" title="Finish & Process Speech">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Done</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ============================================== -->
+          <!-- Unified Production Input Dock: Text Box & Mic -->
+          <!-- ============================================== -->
+          <div class="input-dock-container">
+            <form class="input-form" id="inputForm" onsubmit="return false;">
+              <!-- Microphone Button Integrated into Input Dock -->
+              <button type="button" id="btnInputMic" class="btn-dock-mic" aria-label="Toggle voice input" title="Click to speak (Whisper STT Offline)">
+                <div class="mic-pulse-ring"></div>
+                <div class="mic-pulse-ring delay"></div>
+                <svg class="mic-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="22"></line>
+                </svg>
+              </button>
+
+              <!-- Main Input Text Area / Box -->
+              <div class="input-field-wrapper">
+                <textarea 
+                  id="queryInput" 
+                  class="query-input" 
+                  rows="1" 
+                  placeholder="Ask ParkVoice or search parking (e.g. 'Free parking near T Nagar')..." 
+                  aria-label="Parking search query input"
+                  autocomplete="off"
+                  spellcheck="false"
+                ></textarea>
+                <!-- Clear Button Inside Input -->
+                <button type="button" id="btnClearInput" class="btn-clear-input" title="Clear text" style="display: none;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+
+              <!-- Send Button -->
+              <button type="submit" id="btnSendQuery" class="btn-dock-send" aria-label="Send query" title="Send (Enter ↵)">
+                <svg class="send-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </form>
+
+            <!-- Keyboard shortcut hint -->
+            <div class="input-shortcuts-hint">
+              <span>Press <kbd>Enter ↵</kbd> to send</span>
+              <span>•</span>
+              <span><kbd>Shift + Enter</kbd> newline</span>
+              <span>•</span>
+              <span><kbd>/</kbd> focus search</span>
+              <span>•</span>
+              <span id="sttModeIndicator" class="stt-mode-tag">Whisper Offline</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================== -->
+      <!-- Right Panel: Interactive Offline Map & Results -->
+      <!-- ============================================== -->
+      <section class="panel-right" id="panelRight">
+        <!-- Interactive Leaflet Map Card -->
+        <div class="map-card card">
+          <!-- Map Top Control Strip -->
+          <div class="map-top-toolbar">
+            <div class="toolbar-group radius-group">
+              <span class="toolbar-label">Radius:</span>
+              <div class="radius-chips">
+                <button class="radius-chip" data-radius="1000">1km</button>
+                <button class="radius-chip" data-radius="2000">2km</button>
+                <button class="radius-chip active" data-radius="5000">5km</button>
+                <button class="radius-chip" data-radius="10000">10km</button>
+              </div>
+            </div>
+
+            <div class="toolbar-group">
+              <button id="btnSearchArea" class="btn-toolbar" title="Search parking around current map center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span>Search Area</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Leaflet Map Container -->
+          <div id="map" class="leaflet-map-container"></div>
+
+          <!-- Turn-by-Turn Google Maps Style Road Navigation HUD Banner -->
+          <div id="navHudBanner" class="nav-hud-banner" style="display: none;">
+            <div class="nav-hud-main">
+              <div class="nav-hud-icon-box" id="navHudIconBox">
+                <span class="nav-hud-icon" id="navHudIcon">⬆️</span>
+              </div>
+              <div class="nav-hud-text">
+                <div class="nav-hud-step" id="navHudStep">Starting offline route...</div>
+                <div class="nav-hud-meta">
+                  <span id="navHudDistance">0.0 km</span> • <span id="navHudDuration">0 mins</span>
+                  <span class="nav-source-tag" id="navSourceTag">100% Offline Route</span>
+                </div>
+              </div>
+              <div class="nav-hud-actions">
+                <button type="button" id="btnNavVoice" class="btn-hud-action" title="Listen to spoken driving directions (Piper TTS)">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                </button>
+                <button type="button" id="btnToggleNavSteps" class="btn-hud-action" title="View all turn-by-turn driving steps">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                </button>
+                <button type="button" id="btnCloseNav" class="btn-hud-action btn-hud-close" title="Exit road navigation">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+            <!-- Expandable Turn-by-Turn Steps List Drawer -->
+            <div id="navStepsDrawer" class="nav-steps-drawer" style="display: none;">
+              <div class="nav-steps-header">
+                <span>Turn-by-Turn Driving Directions</span>
+                <span class="badge badge-distance" id="navTotalStepsBadge">4 Steps</span>
+              </div>
+              <div id="navStepsList" class="nav-steps-list"></div>
+            </div>
+          </div>
+
+          <!-- Floating Map Controls Overlay -->
+          <div class="map-overlay-controls">
+            <button id="btnLocateMe" class="map-control-btn" title="Center GPS Location">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            </button>
+            <button id="btnFitMap" class="map-control-btn" title="Fit all parking spots into view">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            </button>
+            <button id="btnToggleRadius" class="map-control-btn active" title="Toggle Search Radius Circle">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="2"/></svg>
+            </button>
+          </div>
+
+          <!-- Map Footer Status Pill -->
+          <div class="map-footer-pill" id="locationLabelPill">
+            📍 13.0827° N, 80.2707° E • Click map to set position
+          </div>
+        </div>
+
+        <!-- Parking Spots Drawer / Results List -->
+        <div class="parking-results-card card">
+          <div class="results-header">
+            <div class="results-title-group">
+              <span class="results-title">Found Parking Locations</span>
+              <span class="results-badge" id="resultsCountSubtitle">0 spots</span>
+            </div>
+
+            <!-- Filter Pills -->
+            <div class="filter-pills" id="filterPillsContainer">
+              <button class="filter-pill active" data-filter="all">All</button>
+              <button class="filter-pill" data-filter="free">Free</button>
+              <button class="filter-pill" data-filter="covered">Covered / MLCP</button>
+              <button class="filter-pill" data-filter="capacity">High Capacity</button>
+            </div>
+
+            <!-- Sort selector -->
+            <div class="sort-selector-wrapper">
+              <select id="selectSortBy" class="sort-select" aria-label="Sort parking spots">
+                <option value="distance">Nearest First</option>
+                <option value="capacity">Most Slots</option>
+                <option value="free">Free First</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Results Scroll Area -->
+          <div class="parking-list" id="parkingList">
+            <div class="empty-state">
+              <div class="empty-icon-box">🅿️</div>
+              <h4 class="empty-title">No Search Performed Yet</h4>
+              <p class="empty-desc">Type a parking query or tap the microphone to discover offline OpenStreetMap parking locations near your GPS position.</p>
+              <button class="btn-primary-sm" onclick="sendTextPrompt('Find nearby parking places')">Search Nearby Parking</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Hidden compatibility button for legacy bindings -->
+    <button id="btnMic" style="display: none;" aria-hidden="true"></button>
+
+    <!-- Settings & Offline Region Modal -->
+    <div class="modal-backdrop" id="settingsModal" style="display: none;">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div class="modal-title-row">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <h2 class="modal-title">Settings & Offline Intelligence</h2>
+          </div>
+          <button class="btn-close" id="btnCloseSettings" aria-label="Close settings">&times;</button>
+        </div>
+
+        <!-- Modal Navigation Tabs -->
+        <div class="modal-tab-nav">
+          <button class="modal-nav-btn active" data-tab="tab-location">📍 Location & Offline Regions</button>
+          <button class="modal-nav-btn" data-tab="tab-engines">⚙️ Speech & AI Engines</button>
+          <button class="modal-nav-btn" data-tab="tab-osm">🗺️ Offline Maps DB</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Tab 1: Location -->
+          <div class="modal-tab-pane active" id="tab-location">
+            <div class="form-group">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label class="form-label" style="margin-bottom: 0;">Downloaded Offline Regions</label>
+                <button type="button" id="btnRefreshOfflineRegions" class="btn-chip-sm" title="Reload from offline database">↻ Refresh</button>
+              </div>
+              <select id="selectLocationPreset" class="form-select">
+                <option value="">Loading downloaded regions...</option>
+              </select>
+              <p class="field-hint">Dynamically loaded from your offline SQLite map database.</p>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+              <button type="button" id="btnUseGpsModal" class="btn-secondary flex-1" style="font-size: 0.78rem;">
+                <span>📍 Center on Device GPS</span>
+              </button>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label class="form-label">Latitude</label>
+                <input type="number" id="inputLat" class="form-input" step="0.0001" value="13.0827">
+              </div>
+              <div class="form-group flex-1">
+                <label class="form-label">Longitude</label>
+                <input type="number" id="inputLon" class="form-input" step="0.0001" value="80.2707">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="label-with-value">
+                <label class="form-label">Default Search Radius</label>
+                <span class="range-value"><span id="radiusVal">5000</span> m</span>
+              </div>
+              <input type="range" id="inputRadius" class="form-slider" min="500" max="15000" step="500" value="5000">
+            </div>
+          </div>
+
+          <!-- Tab 2: Engines -->
+          <div class="modal-tab-pane" id="tab-engines" style="display: none;">
+            <div class="form-group">
+              <label class="form-label">Speech-to-Text (STT) Engine</label>
+              <select id="selectSttEngine" class="form-select">
+                <option value="whisper" selected>Faster-Whisper Offline (Local CPU INT8)</option>
+                <option value="webspeech">Browser Web Speech API</option>
+              </select>
+              <p class="field-hint">Faster-Whisper runs 100% locally on your machine with zero external network access.</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Text-to-Speech (TTS) Engine</label>
+              <select id="selectTtsEngine" class="form-select">
+                <option value="piper" selected>Piper Neural Voice Offline (Local ONNX)</option>
+                <option value="webspeech">Browser Web Speech Synthesis</option>
+              </select>
+              <p class="field-hint">Piper generates human-quality voice audio in under 1 second without internet.</p>
+            </div>
+
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="checkboxAutoPlay" checked>
+                <span>Automatically speak responses aloud via Piper TTS</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Tab 3: OSM Database & Downloader -->
+          <div class="modal-tab-pane" id="tab-osm" style="display: none;">
+            <div class="osm-offline-box">
+              <div class="osm-box-header">
+                <strong>Offline OpenStreetMap Database</strong>
+                <span class="badge-success" id="badgeTotalSpotsModal">255 Spots</span>
+              </div>
+              <p class="osm-box-desc">All parking spots, coordinates, fees, and attributes are stored locally in SQLite with a spatial Haversine formula index.</p>
+              
+              <!-- Dynamic Location Search & Mirror Checker -->
+              <div class="form-group" style="margin-top: 6px;">
+                <label class="form-label">Search Any City / Location</label>
+                <div class="search-region-input-group">
+                  <input type="text" id="inputSearchRegion" class="form-input flex-1" placeholder="Search city or town (e.g. 'Tambaram', 'Coimbatore', 'Vellore')...">
+                  <button type="button" id="btnSearchRegion" class="btn-primary">
+                    <span>🔍 Search</span>
+                  </button>
+                </div>
+                <p class="field-hint">Search any location to verify its presence in OpenStreetMap mirrors and download its offline map data.</p>
+              </div>
+
+              <!-- Search Result Card (Hidden until searched) -->
+              <div class="region-search-result-card" id="regionSearchResultBox" style="display: none;">
+                <div class="region-result-header">
+                  <div>
+                    <div class="region-result-title" id="regionResultTitle">Tambaram, Tamil Nadu</div>
+                    <div class="region-result-coords" id="regionResultCoords">📍 12.9258° N, 80.1179° E</div>
+                  </div>
+                  <span class="badge badge-distance" id="regionResultBboxBadge">BBOX Available</span>
+                </div>
+                <div class="region-result-actions">
+                  <button type="button" id="btnDownloadFoundRegion" class="btn-primary flex-1">
+                    <span>📥 Download Offline Map</span>
+                  </button>
+                  <button type="button" id="btnSetAsMapPosition" class="btn-secondary" title="Set current app location to this place">
+                    <span>📍 Go to Location</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Mirror Download Status Alert -->
+              <div id="mirrorStatusAlert" class="region-alert-box" style="display: none;"></div>
+
+              <!-- Preset Regions Dropdown -->
+              <div style="border-top: 1px solid var(--border-subtle); padding-top: 10px; margin-top: 4px;">
+                <label class="form-label" style="margin-bottom: 6px; display: block;">Or Select a Preset Region</label>
+                <div class="download-region-group">
+                  <select id="selectDownloadRegion" class="form-select flex-1">
+                    <option value="redhills">Red Hills (North Chennai / Puzhal)</option>
+                    <option value="gummidipoondi">Gummidipoondi (Industrial & Station Corridor)</option>
+                    <option value="chennai">Chennai (Metropolitan Area)</option>
+                    <option value="thiruvallur">Thiruvallur District</option>
+                    <option value="bangalore">Bangalore</option>
+                    <option value="mumbai">Mumbai</option>
+                    <option value="delhi">Delhi</option>
+                  </select>
+                  <button id="btnDownloadRegion" class="btn-primary">Download Preset</button>
+                </div>
+              </div>
+              <div id="downloadStatusText" class="download-status"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" id="btnResetSettings">Reset to Defaults</button>
+          <button class="btn-primary" id="btnApplySettings">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Start Navigation Origin Selection Modal -->
+    <div class="modal-backdrop" id="modalPickOrigin" style="display: none;">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <div class="modal-title-row">
+            <span style="font-size: 22px;">🧭</span>
+            <div>
+              <h2 class="modal-title">Start Navigation</h2>
+              <p class="modal-subtitle">From where should I pick you up / start?</p>
+            </div>
+          </div>
+          <button class="btn-close" id="btnClosePickOrigin" aria-label="Close navigation modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Target Destination Summary Card -->
+          <div class="nav-dest-card">
+            <div class="nav-dest-header">
+              <span class="nav-dest-badge">Destination Parking</span>
+              <span class="badge badge-distance" id="navDestDistance">Nearest</span>
+            </div>
+            <div class="nav-dest-title" id="navDestName">Parking Destination</div>
+            <div class="nav-dest-meta" id="navDestAddress">EVR Periyar Salai • ₹30/hr</div>
+          </div>
+
+          <!-- Origin Selection Options -->
+          <div class="origin-options-group">
+            <label class="form-label" style="margin-top: 10px; margin-bottom: 8px;">Select Starting Location:</label>
+
+            <!-- Option 1: Current GPS / Map Pin -->
+            <label class="origin-option-card active" id="cardOriginCurrent">
+              <input type="radio" name="originChoice" value="current" checked>
+              <div class="origin-option-content">
+                <div class="origin-option-title">📍 Current Location / GPS Pin</div>
+                <div class="origin-option-desc" id="navCurrentOriginDesc">Chennai Central (13.0827° N, 80.2707° E)</div>
+              </div>
+            </label>
+
+            <!-- Option 2: Downloaded Offline Regions -->
+            <label class="origin-option-card" id="cardOriginRegion">
+              <input type="radio" name="originChoice" value="offline_region">
+              <div class="origin-option-content" style="width: 100%;">
+                <div class="origin-option-title">💾 Downloaded Offline Region</div>
+                <div class="origin-option-desc">Start from one of your downloaded offline regions</div>
+                <select id="selectOriginRegion" class="form-select origin-select" style="margin-top: 6px; width: 100%;">
+                  <option value="">Loading downloaded regions...</option>
+                </select>
+              </div>
+            </label>
+
+            <!-- Option 3: Pick on Map -->
+            <label class="origin-option-card" id="cardOriginPickMap">
+              <input type="radio" name="originChoice" value="pick_map">
+              <div class="origin-option-content">
+                <div class="origin-option-title">🗺️ Pick Location on Map</div>
+                <div class="origin-option-desc">Close modal and tap any point on the map to start navigation from there</div>
+              </div>
+            </label>
+
+            <!-- Option 4: Custom Landmark / Area -->
+            <label class="origin-option-card" id="cardOriginCustom">
+              <input type="radio" name="originChoice" value="custom_landmark">
+              <div class="origin-option-content" style="width: 100%;">
+                <div class="origin-option-title">🔍 Search Known Landmark / Area</div>
+                <div class="origin-option-desc">Enter any offline landmark or area name</div>
+                <input type="text" id="inputCustomOrigin" class="form-input origin-input" placeholder="e.g. Redhills, Ponneri, T Nagar..." style="margin-top: 6px; width: 100%;">
+              </div>
+            </label>
+          </div>
+
+          <!-- Spoken Navigation Toggle -->
+          <div class="form-group checkbox-group" style="margin-top: 14px;">
+            <label class="checkbox-label">
+              <input type="checkbox" id="checkboxNavVoice" checked>
+              <span>Speak turn-by-turn driving directions aloud (Piper TTS Offline)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="btnCancelPickOrigin">Cancel</button>
+          <button type="button" class="btn-primary" id="btnConfirmStartNav">
+            <span>🚗 Start Route</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+  </div>
+
+  <!-- Local Offline Leaflet JS & App JS -->
+  <script src="/static/vendor/leaflet/leaflet.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

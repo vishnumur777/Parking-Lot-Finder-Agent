@@ -218,3 +218,17 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Machine Learning Models & Heavy Weights (Downloaded locally, not committed)
+models/*
+!models/.gitkeep
+*.onnx
+*.gguf
+*.bin
+*.pt
+*.safetensors
+
+# Local OpenStreetMap Spatial Database (Ingested dynamically)
+data/*.db
+!data/.gitkeep
+

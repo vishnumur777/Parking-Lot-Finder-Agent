@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#grad)" />
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#93c5fd" stroke-width="8" stroke-dasharray="16 12" opacity="0.4" />
+  <!-- Map Pin / P Symbol -->
+  <path d="M256 90 C180 90 120 150 120 226 C120 320 256 420 256 420 C256 420 392 320 392 226 C392 150 332 90 256 90 Z" fill="#ffffff" />
+  <circle cx="256" cy="210" r="75" fill="url(#glow)" />
+  <text x="256" y="240" font-family="system-ui, -apple-system, sans-serif" font-size="88" font-weight="900" fill="#ffffff" text-anchor="middle">P</text>
+  <!-- Microphone badge -->
+  <circle cx="360" cy="360" r="50" fill="#10b981" stroke="#ffffff" stroke-width="8" />
+  <path d="M360 335 C354.5 335 350 339.5 350 345 L350 365 C350 370.5 354.5 375 360 375 C365.5 375 370 370.5 370 365 L370 345 C370 339.5 365.5 335 360 335 Z M342 357 C342 367 350 375 360 375 C370 375 378 367 378 357 M360 375 L360 385 M352 385 L368 385" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+</svg>
